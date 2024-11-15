@@ -117,7 +117,7 @@ const sendQuestion = async () => {
       });
       console.log('generate res', response);
       console.log('generate res', response.message);
-      
+
       templateId.value = response.template_id;
       messages.value[messages.value.length - 1].answer = response.message;
 
@@ -128,16 +128,16 @@ const sendQuestion = async () => {
       document.body.appendChild(link);
       link.click();
       link.remove();
-
+      await getGenerateList()
       ElNotification({
         title: 'Success',
         message: 'File is ready and downloaded',
         type: 'success',
-        duration: 10000,
+        duration: 5000,
       });
     } catch (error) {
-      console.log('------>',error);
-      
+      console.log('------>', error);
+
       messages.value[messages.value.length - 1].answer = 'Error fetching response.';
     }
     userQuestion.value = '';
@@ -156,12 +156,14 @@ const saveTemplate = async () => {
   }
   try {
     const res = await statusUpdate({ template_id: templateId.value, status: 'save' })
+    await getGenerateList()
     ElNotification({
       title: 'Success',
       message: 'The instruction has been saved',
       type: 'success',
-      duration: 10000,
+      duration: 5000,
     });
+    await getGenerateList()
   } catch {
     ElNotification({
       title: 'Error',
@@ -188,14 +190,31 @@ const regenerate = async () => {
   }
   console.log(selectedTemplate);
   if (selectedTemplate.value) {
+  try{
     const response = await reGenerate({ file, template_id: selectedTemplate.value })
     console.log('regenerate', response);
+    // 创建一个下载链接并点击下载
+    const url = window.URL.createObjectURL(new Blob([response]));
+    const link = document.createElement("a");
+    link.href = url;
+    link.setAttribute("download", "output.xlsx");  // 设置文件名
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
     ElNotification({
       title: 'Generated',
       message: 'The excel has been generated',
       type: 'success',
-      duration: 10000,
+      duration: 5000,
     });
+  }catch(error){
+    ElNotification({
+      title: 'error',
+      message: 'Download failed',
+      type: 'error',
+      duration: 5000,
+    });
+  }
   } else {
     ElNotification({
       title: 'error',
@@ -230,7 +249,7 @@ const downTemplate = async () => {
     title: 'Success',
     message: 'File is ready and downloaded',
     type: 'success',
-    duration: 10000,
+    duration: 5000,
   });
 }
 const getGenerateList = async () => {

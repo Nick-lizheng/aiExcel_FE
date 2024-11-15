@@ -26,7 +26,7 @@ export const reGenerate = async (data: {
     formData.append('file', data.file)
     formData.append('template_id', data.template_id)
     const response = await axiosClient.post<any>('/api/case/generate', formData)
-    return response
+    return response.data
 
 }
 //   statusUpdate

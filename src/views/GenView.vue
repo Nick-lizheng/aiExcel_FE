@@ -1,19 +1,34 @@
 <template>
   <el-container class="chat-container">
-
     <el-header class="chat-footer">
+      <!-- 文件上传 -->
       <el-row :gutter="10" class="input-row">
         <el-col :span="4">
-          <el-upload ref="upload" class="wid-100" action="" :auto-upload="false" :on-change="handleFileChange"
-            :file-list="fileList" list-type="text">
+          <el-upload
+            ref="upload"
+            class="wid-100"
+            action=""
+            :auto-upload="false"
+            :on-change="handleFileChange"
+            :file-list="fileList"
+            list-type="text"
+          >
             <el-button type="primary" class="wid-100">Select File</el-button>
           </el-upload>
         </el-col>
         <el-col :span="20">
-          <el-input type="textarea" v-model="userQuestion" placeholder="Enter your requirement"
-            @keyup.enter="sendQuestion" :autosize="{ minRows: 3, maxRows: 5 }" class="chat-input" />
+          <el-input
+            type="textarea"
+            v-model="userQuestion"
+            placeholder="Enter your requirement"
+            @keyup.enter="sendQuestion"
+            :autosize="{ minRows: 3, maxRows: 5 }"
+            class="chat-input"
+          />
         </el-col>
       </el-row>
+
+      <!-- 操作按钮 -->
       <el-row>
         <el-col class="send-button-col">
           <el-button type="primary" @click="sendQuestion" class="send-button">Generate</el-button>
@@ -28,11 +43,36 @@
         </el-col>
       </el-row>
 
-      <!-- Replaced el-dropdown with el-select -->
+      <!-- 可编辑/删除的下拉框 -->
       <el-row>
         <el-col class="send-button-col">
-          <el-select v-model="selectedTemplate" placeholder="Select the template to regenerate" @change="handleCommand">
-            <el-option v-for="item in dropdownItems" :key="item.id" :label="item.compliedClassPath" :value="item.id" />
+          <el-select
+            v-model="selectedTemplate"
+            placeholder="Select the template to regenerate"
+            class="dropdown"
+          >
+            <el-option
+              v-for="(item, index) in dropdownItems"
+              :key="item.id"
+              :label="item.compliedClassPath"
+              :value="item.id"
+            >
+              <div class="option-content">
+                <span>{{ item.compliedClassPath }}</span>
+                <div class="option-actions">
+                  <!-- <el-button @click="editOption(index)" size="small">
+                    <el-icon :size="20">
+                      <Edit />
+                    </el-icon>
+                  </el-button> -->
+                  <el-button @click="deleteOption(index)" size="small">
+                    <el-icon :size="20">
+                      <Delete />
+                    </el-icon>
+                  </el-button>
+                </div>
+              </div>
+            </el-option>
           </el-select>
         </el-col>
       </el-row>
@@ -43,6 +83,8 @@
         </el-col>
       </el-row>
     </el-header>
+
+    <!-- 主内容 -->
     <el-main class="chat-main">
       <div v-for="(message, index) in messages" :key="index" class="message">
         <p><strong>Question:</strong> {{ message.question }}</p>
@@ -51,6 +93,15 @@
         </p>
       </div>
     </el-main>
+
+    <!-- 编辑弹窗 -->
+    <el-dialog v-model="isEditing" title="Edit Option">
+      <el-input v-model="editedLabel" placeholder="Enter new label"></el-input>
+      <span slot="footer" class="dialog-footer">
+        <el-button @click="cancelEdit">Cancel</el-button>
+        <el-button type="primary" @click="saveEdit">Save</el-button>
+      </span>
+    </el-dialog>
   </el-container>
 </template>
 
@@ -58,204 +109,172 @@
 import { ref, onMounted } from 'vue';
 import axios from 'axios';
 import { getTemplateList, reGenerate, statusUpdate, uploadExcelTemplate } from '@/services/api';
-import { ElNotification } from 'element-plus'
+import { ElNotification } from 'element-plus';
+import { Edit, Delete } from '@element-plus/icons-vue';
 
+// 数据定义
 const userQuestion = ref('');
 const templateId = ref('');
 const downloadUrl = ref('');
 const fileList = ref([]);
 const messages = ref([]);
-const markdownString = ref('');
 const dropdownItems = ref([]);
 const selectedTemplate = ref(null);
 
+// 编辑功能
+const isEditing = ref(false);
+const editedLabel = ref('');
+const editIndex = ref(-1);
+
+// 获取下拉框列表
 onMounted(() => {
   getGenerateList();
 });
 
+// 文件处理
 const handleFileChange = (file) => {
   fileList.value = [file.raw];
 };
 
-const handleCommand = (id) => {
-  ElNotification({
-    message: `Selected item ID: ${id}`,
-    type: 'success',
-  });
-  console.log('Selected item ID:', id);
-};
-
+// 提交问题
 const sendQuestion = async () => {
   if (!userQuestion.value.trim()) {
-    ElNotification({
-      title: 'error',
-      message: 'Please input your requirement',
-      type: 'error',
-      duration: 3000,
-    });
-    return
+    ElNotification.error('Please input your requirement');
+    return;
   }
-  if (userQuestion.value.trim()) {
-    const file = fileList.value[0];
-    if (!file) {
-      ElNotification({
-        title: 'error',
-        message: 'Please upload a source file',
-        type: 'error',
-        duration: 3000,
-      });
-      return
-    }
-    const question = userQuestion.value;
-    messages.value.push({ question, answer: 'Loading...' });
-    try {
 
-      const response = await uploadExcelTemplate({
-        file,
-        userId: 'ethan',
-        instruction: question,
-      });
-      console.log('generate res', response);
-      console.log('generate res', response.message);
+  const file = fileList.value[0];
+  if (!file) {
+    ElNotification.error('Please upload a source file');
+    return;
+  }
 
-      templateId.value = response.template_id;
-      messages.value[messages.value.length - 1].answer = response.message;
-
-      downloadUrl.value = response.outputFileUrl;
-      let link = document.createElement("a");
-      link.href = downloadUrl.value;
-      link.setAttribute("download", "output.xlsx");
-      document.body.appendChild(link);
-      link.click();
-      link.remove();
-      await getGenerateList()
-      ElNotification({
-        title: 'Success',
-        message: 'File is ready and downloaded',
-        type: 'success',
-        duration: 5000,
-      });
-    } catch (error) {
-      console.log('------>', error);
-
-      messages.value[messages.value.length - 1].answer = 'Error fetching response.';
-    }
-    userQuestion.value = '';
+  messages.value.push({ question: userQuestion.value, answer: 'Loading...' });
+  try {
+    const response = await uploadExcelTemplate({
+      file,
+      userId: 'ethan',
+      instruction: userQuestion.value,
+    });
+    messages.value[messages.value.length - 1].answer = response.message;
+    downloadUrl.value = response.outputFileUrl;
+    templateId.value = response.template_id;
+    getGenerateList();
+    ElNotification.success('File is ready and downloaded');
+  } catch (error) {
+    messages.value[messages.value.length - 1].answer = 'Error fetching response.';
   }
 };
 
+// 保存模板
 const saveTemplate = async () => {
   if (!templateId.value) {
-    ElNotification({
-      title: 'Error',
-      message: 'Please generate the template first',
-      type: 'error',
-      duration: 3000,
-    });
-    return
+    ElNotification.error('Please generate the template first');
+    return;
   }
   try {
-    const res = await statusUpdate({ template_id: templateId.value, status: 'save' })
-    await getGenerateList()
-    ElNotification({
-      title: 'Success',
-      message: 'The instruction has been saved',
-      type: 'success',
-      duration: 5000,
-    });
-    await getGenerateList()
+    await statusUpdate({ template_id: templateId.value, status: 'save' });
+    getGenerateList();
+    ElNotification.success('The instruction has been saved');
   } catch {
-    ElNotification({
-      title: 'Error',
-      message: 'please try it later',
-      type: 'error',
-      duration: 3000,
-    });
+    ElNotification.error('Please try it later');
   }
+};
 
-}
-
+// 重新生成文件
 const regenerate = async () => {
   const file = fileList.value[0];
-  console.log('------>', file);
-
   if (!file) {
-    ElNotification({
-      title: 'error',
-      message: 'Please upload a source file',
-      type: 'error',
-      duration: 5000,
-    });
-    return
+    ElNotification.error('Please upload a source file');
+    return;
   }
-  console.log(selectedTemplate);
-  if (selectedTemplate.value) {
-  try{
-    const response = await reGenerate({ file, template_id: selectedTemplate.value })
-    console.log('regenerate', response);
-    // 创建一个下载链接并点击下载
+
+  if (!selectedTemplate.value) {
+    ElNotification.error('Please select a template');
+    return;
+  }
+
+  try {
+    const response = await reGenerate({ file, template_id: selectedTemplate.value });
     const url = window.URL.createObjectURL(new Blob([response]));
-    const link = document.createElement("a");
+    const link = document.createElement('a');
     link.href = url;
-    link.setAttribute("download", "output.xlsx");  // 设置文件名
+    link.setAttribute('download', 'output.xlsx');
     document.body.appendChild(link);
     link.click();
     link.remove();
-    ElNotification({
-      title: 'Generated',
-      message: 'The excel has been generated',
-      type: 'success',
-      duration: 5000,
-    });
-  }catch(error){
-    ElNotification({
-      title: 'error',
-      message: 'Download failed',
-      type: 'error',
-      duration: 5000,
-    });
+    ElNotification.success('The Excel file has been regenerated');
+  } catch {
+    ElNotification.error('Failed to regenerate the file');
   }
-  } else {
-    ElNotification({
-      title: 'error',
-      message: 'Please select a template',
-      type: 'error',
-      duration: 5000,
-    });
-  }
+};
 
-
-
-
-}
-
-const downTemplate = async () => {
+// 下载模板
+const downTemplate = () => {
   if (!downloadUrl.value) {
-    ElNotification({
-      title: 'error',
-      message: 'Please generate first',
-      type: 'error',
-      duration: 3000,
-    });
-    return
+    ElNotification.error('Please generate the file first');
+    return;
   }
-  let link = document.createElement("a");
+  const link = document.createElement('a');
   link.href = downloadUrl.value;
-  link.setAttribute("download", "output.xlsx");
+  link.setAttribute('download', 'output.xlsx');
   document.body.appendChild(link);
   link.click();
   link.remove();
-  ElNotification({
-    title: 'Success',
-    message: 'File is ready and downloaded',
-    type: 'success',
-    duration: 5000,
-  });
-}
+  ElNotification.success('File downloaded successfully');
+};
+
+// 获取生成列表
 const getGenerateList = async () => {
   const res = await getTemplateList();
   dropdownItems.value = res;
-}
+};
+
+// 编辑功能相关方法
+const editOption = (index) => {
+  editIndex.value = index;
+  editedLabel.value = dropdownItems.value[index].compliedClassPath;
+  isEditing.value = true;
+};
+
+const saveEdit = async () => {
+  if (!editedLabel.value.trim()) {
+    ElNotification.error('Label cannot be empty');
+    return;
+  }
+
+  const item = dropdownItems.value[editIndex.value];
+  try {
+    await axios.put(`/api/templates/${item.id}`, {
+      compliedClassPath: editedLabel.value.trim(),
+    });
+    dropdownItems.value[editIndex.value].compliedClassPath = editedLabel.value.trim();
+    isEditing.value = false;
+    ElNotification.success('Template updated successfully');
+  } catch {
+    ElNotification.error('Failed to update the template');
+  }
+};
+
+const cancelEdit = () => {
+  isEditing.value = false;
+  editedLabel.value = '';
+  editIndex.value = -1;
+};
+
+const deleteOption = async (index) => {
+  const item = dropdownItems.value[index];
+  try {
+    await statusUpdate({
+      template_id: item.id,
+      status: 'delete'
+    })
+    dropdownItems.value.splice(index, 1);
+    ElNotification.success('Template deleted successfully');
+  } catch {
+    ElNotification.error('Failed to delete the template');
+  }
+};
 </script>
 
 <style scoped>
@@ -264,18 +283,6 @@ const getGenerateList = async () => {
   display: flex;
   flex-direction: column;
   background-color: aliceblue;
-}
-
-.upload-demo {
-  width: 100%;
-}
-
-.wid-100 {
-  width: 100%;
-}
-
-.el-upload.el-upload--text {
-  width: 100%;
 }
 
 .chat-main {
@@ -303,6 +310,17 @@ const getGenerateList = async () => {
 }
 
 .el-row {
-  margin-bottom: 16px
+  margin-bottom: 16px;
+}
+
+.option-content {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.option-actions {
+  display: flex;
+  gap: 8px;
 }
 </style>

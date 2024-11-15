@@ -201,13 +201,14 @@ const regenerate = async () => {
 
   try {
     const response = await reGenerate({ file, template_id: selectedTemplate.value });
-    const url = window.URL.createObjectURL(new Blob([response]));
-    const link = document.createElement('a');
-    link.href = url;
-    link.setAttribute('download', 'output.xlsx');
-    document.body.appendChild(link);
-    link.click();
-    link.remove();
+    const url = response.path;
+    window.location.href = url
+    // const link = document.createElement('a');
+    // link.href = url;
+    // link.setAttribute('download', 'output.xlsx');
+    // document.body.appendChild(link);
+    // link.click();
+    // link.remove();
     ElNotification.success('The Excel file has been regenerated');
   } catch {
     ElNotification.error('Failed to regenerate the file');

@@ -6,9 +6,9 @@ import AsideBar from './components/AsideBar.vue';
   <el-container>
     <!-- <el-header><h1>Hackathon UI</h1></el-header> -->
     <el-container>
-      <el-aside>
+      <!-- <el-aside>
         <AsideBar></AsideBar>
-      </el-aside>
+      </el-aside> -->
       <el-main>
         <RouterView />
       </el-main>

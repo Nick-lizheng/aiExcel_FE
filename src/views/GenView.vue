@@ -13,7 +13,7 @@
             :file-list="fileList"
             list-type="text"
           >
-            <el-button type="primary" class="wid-100">Select File</el-button>
+            <el-button type="primary" class="wid-100 hover-zoom">Select File</el-button>
           </el-upload>
         </el-col>
         <el-col :span="20">
@@ -31,8 +31,13 @@
       <!-- 操作按钮 -->
       <el-row>
         <el-col class="send-button-col">
-          <el-button type="primary" @click="sendQuestion" class="send-button">Generate</el-button>
-        </el-col>
+    <el-button 
+      type="primary" 
+      @click="sendQuestion" 
+      class="send-button">
+      Generate
+    </el-button>
+  </el-col>
       </el-row>
       <el-row :gutter="10">
         <el-col :span="12" class="send-button-col">
@@ -278,6 +283,10 @@ const deleteOption = async (index) => {
 </script>
 
 <style scoped>
+.send-button:hover {
+  transform: scale(1.05); 
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2); 
+}
 .chat-container {
   max-height: 100vh;
   display: flex;
@@ -307,6 +316,7 @@ const deleteOption = async (index) => {
 
 .send-button {
   width: 100%;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
 }
 
 .el-row {
@@ -322,5 +332,13 @@ const deleteOption = async (index) => {
 .option-actions {
   display: flex;
   gap: 8px;
+}
+.hover-zoom {
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.hover-zoom:hover {
+  transform: scale(1.1);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1); 
 }
 </style>

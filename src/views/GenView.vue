@@ -165,7 +165,7 @@ const sendQuestion = async () => {
     downloadUrl.value = response.outputFileUrl;
     templateId.value = response.template_id;
     getGenerateList();
-    ElNotification.success('File is ready and downloaded');
+    ElNotification.success('File is ready, please download');
   } catch (error) {
     messages.value[messages.value.length - 1].answer = 'Error fetching response.';
   }

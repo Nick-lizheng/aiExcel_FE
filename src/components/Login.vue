@@ -7,7 +7,7 @@
       
       <div class="right-side">
         <h1 class="page-title">HK Crazy Thursday Team</h1>
-        <img src="@/assets/DBS.png" alt="dbs Image" class="dbs-image" />
+        <!-- <img src="@/assets/DBS.png" alt="dbs Image" class="dbs-image" /> -->
         <!-- 右侧登录表单 -->
         <div class="login-form-container">
           <h2>Login</h2>

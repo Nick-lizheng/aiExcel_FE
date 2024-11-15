@@ -8,7 +8,7 @@ let loadingInstance :any
 // 创建 axios 实例
 const axiosClient: AxiosInstance = axios.create({
   baseURL: 'http://localhost:8090', // 替换为实际 API 基本 URL
-  timeout: 100000 // 请求超时时间
+  timeout: 10000000 // 请求超时时间
 })
 
 // 请求拦截器

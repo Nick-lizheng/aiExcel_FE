@@ -274,19 +274,15 @@ const getGenerateList = async () => {
   width: 100%;
 }
 
-.wid-100 .el-upload {
-  color: red;
-  background-color: red
-}
-
 .el-upload.el-upload--text {
   width: 100%;
 }
 
 .chat-main {
   flex: 1;
-  margin-top: 20vh;
-  max-height: 80vh;
+  margin-top: 28vh;
+  max-height: 72vh;
+  color: #333;
 }
 
 .chat-footer {
